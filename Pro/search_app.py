@@ -10,7 +10,7 @@ from geo import reverse_geocode
 from bis import find_business
 
 # Подобранные констатны для поведения карты.
-LAT_STEP = 0.008  # Шаги при движении карты по широте и долготе
+LAT_STEP = 0.0108  # Шаги при движении карты по широте и долготе
 LON_STEP = 0.02
 coord_to_geo_x = 0.0000428  # Пропорции пиксельных и географических координат.
 coord_to_geo_y = 0.0000428
@@ -36,8 +36,8 @@ class SearchResult(object):
 class MapParams(object):
     # Параметры по умолчанию.
     def __init__(self):
-        self.lat = 55.729738  # Координаты центра карты на старте.
-        self.lon = 37.664777
+        self.lat = 55.229738  # Координаты центра карты на старте.
+        self.lon = 37.534777
         self.zoom = 15  # Масштаб карты на старте.
         self.type = "map"  # Тип карты на старте.
 
@@ -50,8 +50,28 @@ class MapParams(object):
 
     # Обновление параметров карты по нажатой клавише.
     def update(self, event):
-        pass
-
+        if event.key == 280 and self.zoom < 19:
+            self.zoom += 1
+        elif event.key == 281 and self.zoom > 2:
+            self.zoom -= 1
+        elif event.key == 273:
+            self.lat += LAT_STEP
+        elif event.key == 274:
+            self.lat -= LAT_STEP
+        elif event.key == 276:
+            self.lon -= LON_STEP
+        elif event.key == 275:
+            self.lon += LON_STEP
+        if self.lon > 180: self.lon -= 360
+        if self.lon < -180: self.lon += 360
+        elif event.key == 49: #1
+            self.type = "map"
+        elif event.key == 50: #2
+            self.type = "sat"
+        elif event.key == 51: #3
+            self.type = "sat,skl"
+        elif event.key == 127:
+            self.search_result = None
     # Преобразование экранных координат в географические.
     def screen_to_geo(self, pos):
         dy = 225 - pos[1]
@@ -62,8 +82,10 @@ class MapParams(object):
 
     # Добавить результат геопоиска на карту.
     def add_reverse_toponym_search(self, pos):
-        pass
-
+        point = self.screen_to_geo(pos)
+        toponym = reverse_geocode(ll(point[0], point[1]))
+        self.search_result = SearchResult(point,
+                                          toponym["metaDataProperty"]["GeocoderMetaData"]['text'] if toponym else None)
     # Добавить результат поиска организации на карту.
     def add_reverse_org_search(self, pos):
         pass
@@ -96,7 +118,8 @@ def load_map(mp):
 
 # Создание холста с текстом.
 def render_text(text):
-    pass
+    font = pygame.font.Font(None, 30)
+    return font.render(text, 1, (0, 0, 0))
 
 
 def main():
